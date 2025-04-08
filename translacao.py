@@ -1,9 +1,16 @@
 import glfw
+import math
 from OpenGL.GL import *
+import random
 
 x, y = 0, 0
 angulo = 0
 tam = 0.10
+mov = 0.01
+aceleracao = 0.0003
+
+num_estrelas = 50
+vertices_estrelas = [(random.uniform(-1, 1), random.uniform(-1, 1)) for _ in range (num_estrelas)]
 
 def inicio():
     glClearColor(0, 0, 0.3, 1)
@@ -21,37 +28,44 @@ def desenha():
     glVertex2f(0.0, tam)   
     glEnd()
 
-    glPopMatrix()
-
-    glBegin(GL_QUADS)
-    glColor3f(1.0, 0.5, 0.0)
-    glVertex2f(0.5, 0.5)
-    glVertex2f(0.5, 0.75) 
-    glVertex2f(0.75, 0.75)   
-    glVertex2f(0.75, 0.5) 
+    glBegin(GL_POLYGON)
+    glColor3f(0.2, 0.0, 0.5)
+    glVertex2f(-tam * 0.15, 0.3 * tam)
+    glVertex2f(-tam * 0.1, 0.5 * tam) 
+    glVertex2f(tam * 0.1, 0.5 * tam )   
+    glVertex2f(tam * 0.15, 0.3 * tam )   
+    glVertex2f(0.0, 0.2 * tam)   
     glEnd()
 
+    
+    glBegin(GL_POINTS)  
+    
+
+    glPopMatrix() 
+
+    for x,y in vertices_estrelas:
+        
     glFlush()
 
 def teclado(window, key, scancode, action, mods):
 
     global x, y 
-    global angulo
+    global angulo, mov
 
     if action == glfw.PRESS or action == glfw.REPEAT:
-        if key == glfw.KEY_UP and y <= 1 - 0.15:
-           y+=0.1
-        if key == glfw.KEY_DOWN and y >= -1 + 0.15:
-            y+=-0.1
-        if key == glfw.KEY_LEFT and x >= -1 + 0.15:
-           x+=-0.1
-        if key == glfw.KEY_RIGHT and x <= 1 - 0.15:
-           x+=0.1
+        if key == glfw.KEY_UP:
+           andar = math.radians(angulo + 90)
+           x += math.cos(andar) * mov
+           y += math.sin(andar) * mov 
+
+           mov+=aceleracao
 
         if key == glfw.KEY_A:
             angulo+=10
         if key == glfw.KEY_D:
             angulo+=-10
+
+    
 def main():
     glfw.init()
     window = glfw.create_window(600, 600, 'Teste GLFW', None, None)
