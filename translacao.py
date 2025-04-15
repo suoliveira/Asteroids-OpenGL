@@ -2,15 +2,24 @@ import glfw
 import math
 from OpenGL.GL import *
 import random
+import time
 
 x, y = 0, 0
 angulo = 0
 tam = 0.10
-mov = 0.01
+velocidade_inicial = 0.01
+velocidade_atual = velocidade_inicial 
 aceleracao = 0.0003
+acelerando = False
+tiros = False
 
-num_estrelas = 200
+num_estrelas = 800
 vertices_estrelas = [(random.uniform(-1, 1), random.uniform(-1, 1)) for _ in range(num_estrelas)]
+
+teclas = { glfw.KEY_W: False,
+            glfw.KEY_A: False,
+            glfw.KEY_D: False, 
+            glfw.KEY_SPACE: False}
 
 def desenha_estrelas():
     glBegin(GL_POINTS)
@@ -30,7 +39,7 @@ def desenha():
     glPushMatrix()
     glTranslate(x, y, 0)
     glRotatef(angulo, 0, 0, 1)
-   
+
     glBegin(GL_POLYGON)
     glColor3f(0.8, 0.0, 0.2)  
     glVertex2f(-tam * 0.5, -tam)
@@ -49,12 +58,20 @@ def desenha():
     glVertex2f(0.0, 0.2 * tam)   
     glEnd()
     
+    # ponta do foguete
     glBegin(GL_TRIANGLES)
     glColor3f(1.0, 0.5, 0.0) 
     glVertex2f(-tam * 0.3, tam * 1.5)
     glVertex2f(tam * 0.3, tam * 1.5)
     glVertex2f(0.0, tam * 2.0)
     glEnd()
+
+    if tiros:
+        glBegin(GL_LINES)
+        glColor3f(1.0, 1.0, 0.0)  
+        glVertex2f(0.0, tam * 2.2)  
+        glVertex2f(0.0, tam * 2.5) 
+        glEnd()
 
     # Asa
     glBegin(GL_TRIANGLES)
@@ -72,47 +89,71 @@ def desenha():
     glEnd()
   
     # Fogo
-    glBegin(GL_TRIANGLES)
-    glColor3f(1.0, 0.5, 0.0)  
-    glVertex2f(-tam * 0.3, -tam)
-    glVertex2f(tam * 0.3, -tam)
-    glVertex2f(0.0, -tam * 1.5)
-    glEnd()
+    if acelerando == True or velocidade_atual > 0.01:  
+        glBegin(GL_TRIANGLES)
+        glColor3f(1.0, 0.5, 0.0)  
+        glVertex2f(-tam * 0.3, -tam)
+        glVertex2f(tam * 0.3, -tam)
+        glVertex2f(0.0, -tam * 1.5)
+        glEnd()
 
-    glBegin(GL_TRIANGLES)
-    glColor3f(1.0, 1.0, 0.0)  
-    glVertex2f(-tam * 0.2, -tam * 1.1)
-    glVertex2f(tam * 0.2, -tam * 1.1)
-    glVertex2f(0.0, -tam * 1.8)
-    glEnd()
+        glBegin(GL_TRIANGLES)
+        glColor3f(1.0, 1.0, 0.0)  
+        glVertex2f(-tam * 0.2, -tam * 1.1)
+        glVertex2f(tam * 0.2, -tam * 1.1)
+        glVertex2f(0.0, -tam * 1.8)
+        glEnd()
 
     glPopMatrix() 
         
     glFlush()
 
+def atualizar_aceleracao():
+    global x, y
+    global angulo, velocidade_inicial, velocidade_atual
+
+    if acelerando:
+        velocidade_atual += aceleracao
+    else:
+        if velocidade_atual > velocidade_inicial:
+            velocidade_atual -= aceleracao
+        if velocidade_atual < velocidade_inicial:
+            velocidade_atual = velocidade_inicial
+
+    andar = math.radians(angulo + 90)
+    x += math.cos(andar) * velocidade_atual
+    y += math.sin(andar) * velocidade_atual
+        
+    if x < -1 + tam or x > 1 - tam:
+        x = x * -1
+    if y < -1 + tam or y > 1 - tam:
+        y = y * -1
+    
+    if teclas[glfw.KEY_A]:
+        angulo += 2
+    if teclas[glfw.KEY_D]:
+        angulo -= 2
+
 def teclado(window, key, scancode, action, mods):
+    global  acelerando, teclas, tiros
 
-    global x, y 
-    global angulo, mov
+    if key in teclas:
+        if action == glfw.PRESS:
+            teclas[key] = True
+        elif action == glfw.RELEASE:
+            teclas[key] = False
 
-    if action == glfw.PRESS or action == glfw.REPEAT:
-        if key == glfw.KEY_UP:
-           andar = math.radians(angulo + 90)
-           x += math.cos(andar) * mov
-           y += math.sin(andar) * mov 
+    if key == glfw.KEY_W:
+        if action == glfw.PRESS:
+            acelerando = True
+        elif action == glfw.RELEASE:
+            acelerando = False
 
-           mov+=aceleracao
-
-        if key == glfw.KEY_A:
-            angulo+=10
-        if key == glfw.KEY_D:
-            angulo+=-10
-            
-        if x < -1 + tam or x > 1 - tam:
-            x = x * -1
-        if y < -1 + tam or y > 1 - tam:
-            y = y * -1
-
+    if key == glfw.KEY_SPACE:
+        if action == glfw.PRESS:
+            tiros = True
+        elif action == glfw.RELEASE:
+            tiros = False
     
 def main():
     glfw.init()
@@ -123,8 +164,10 @@ def main():
     inicio()
 
     while glfw.window_should_close(window) == False:
+        time.sleep(1/30)
         glClear(GL_COLOR_BUFFER_BIT)
         desenha()
+        atualizar_aceleracao()
         glfw.swap_buffers(window)
         glfw.poll_events()
     glfw.terminate()
