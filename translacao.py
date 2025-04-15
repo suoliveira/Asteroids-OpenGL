@@ -2,14 +2,18 @@ import glfw
 import math
 from OpenGL.GL import *
 import random
+import time
 
 x, y = 0, 0
 angulo = 0
 tam = 0.10
-mov = 0.01
-aceleracao = 0.0003
 
-num_estrelas = 200
+velocidade_inicial = 0.01
+velocidade_atual = velocidade_inicial 
+aceleracao = 0.0003
+acelerando = False
+
+num_estrelas = 800
 vertices_estrelas = [(random.uniform(-1, 1), random.uniform(-1, 1)) for _ in range(num_estrelas)]
 
 def desenha_estrelas():
@@ -90,28 +94,47 @@ def desenha():
         
     glFlush()
 
-def teclado(window, key, scancode, action, mods):
 
-    global x, y 
-    global angulo, mov
+def atualizar_aceleracao():
+    global x, y
+    global angulo, velocidade_inicial, velocidade_atual
 
-    if action == glfw.PRESS or action == glfw.REPEAT:
-        if key == glfw.KEY_UP:
-           andar = math.radians(angulo + 90)
-           x += math.cos(andar) * mov
-           y += math.sin(andar) * mov 
+    if acelerando:
+        velocidade_atual += aceleracao
+    # else:
+    #     if velocidade_atual > velocidade_inicial:
+    #         velocidade_atual -= aceleracao
+    #     # if velocidade_atual < velocidade_inicial:
+    #     #     velocidade_atual = velocidade_inicial
 
-           mov+=aceleracao
+    #AJEITAR ESSE ELSE E ACELERAÇÃO
 
-        if key == glfw.KEY_A:
-            angulo+=10
-        if key == glfw.KEY_D:
-            angulo+=-10
-            
+        andar = math.radians(angulo + 90)
+        x += math.cos(andar) * velocidade_inicial
+        y += math.sin(andar) * velocidade_inicial 
+        
         if x < -1 + tam or x > 1 - tam:
             x = x * -1
         if y < -1 + tam or y > 1 - tam:
             y = y * -1
+
+
+def teclado(window, key, scancode, action, mods):
+    global angulo, acelerando
+
+    if action == glfw.PRESS or action == glfw.REPEAT:
+        if key == glfw.KEY_UP:
+            acelerando = True
+        if key == glfw.KEY_A:
+            angulo+=10
+        if key == glfw.KEY_D:
+            angulo+=-10
+
+        # if key == glfw.KEY_SPACE:
+        #     atirar
+    if action == glfw.RELEASE:
+        if key == glfw.KEY_UP:
+            acelerando = False
 
     
 def main():
@@ -123,8 +146,10 @@ def main():
     inicio()
 
     while glfw.window_should_close(window) == False:
+        time.sleep(1/30)
         glClear(GL_COLOR_BUFFER_BIT)
         desenha()
+        atualizar_aceleracao()
         glfw.swap_buffers(window)
         glfw.poll_events()
     glfw.terminate()
