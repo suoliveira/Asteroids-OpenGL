@@ -133,10 +133,12 @@ def desenha_tiros():
     global tiros
     novos_tiros = []
     for tiro in tiros:
-        x, y, angulo_tiro = tiro
+        x, y, angulo_tiros = tiro
         y += velocidade_tiros
+        x += velocidade_tiros
+        
         if y <= 1.0:
-            novos_tiros.append([x, y, angulo_tiro])
+            novos_tiros.append([x,y, angulo_tiros])
         glPushMatrix()
         glTranslate(x, y, 0)
         glBegin(GL_LINES)
@@ -148,7 +150,7 @@ def desenha_tiros():
     tiros = novos_tiros
 
 def teclado(window, key, scancode, action, mods):
-    global  acelerando, teclas, tiros, x, y
+    global  acelerando, teclas, tiros, x, y, angulo
 
     if key in teclas:
         if action == glfw.PRESS:
