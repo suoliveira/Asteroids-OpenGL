@@ -11,7 +11,8 @@ velocidade_inicial = 0.01
 velocidade_atual = velocidade_inicial 
 aceleracao = 0.0003
 acelerando = False
-tiros = False
+tiros = []
+velocidade_tiros = 0.005
 
 num_estrelas = 800
 vertices_estrelas = [(random.uniform(-1, 1), random.uniform(-1, 1)) for _ in range(num_estrelas)]
@@ -65,13 +66,6 @@ def desenha():
     glVertex2f(tam * 0.3, tam * 1.5)
     glVertex2f(0.0, tam * 2.0)
     glEnd()
-
-    if tiros:
-        glBegin(GL_LINES)
-        glColor3f(1.0, 1.0, 0.0)  
-        glVertex2f(0.0, tam * 2.2)  
-        glVertex2f(0.0, tam * 2.5) 
-        glEnd()
 
     # Asa
     glBegin(GL_TRIANGLES)
@@ -134,8 +128,27 @@ def atualizar_aceleracao():
     if teclas[glfw.KEY_D]:
         angulo -= 2
 
+
+def desenha_tiros():
+    global tiros
+    novos_tiros = []
+    for tiro in tiros:
+        x, y, angulo_tiro = tiro
+        y += velocidade_tiros
+        if y <= 1.0:
+            novos_tiros.append([x, y, angulo_tiro])
+        glPushMatrix()
+        glTranslate(x, y, 0)
+        glBegin(GL_LINES)
+        glColor3f(1.0, 1.0, 0.0)  
+        glVertex2f(0.0, tam * 2.2)  
+        glVertex2f(0.0, tam * 2.5) 
+        glEnd()
+        glPopMatrix()
+    tiros = novos_tiros
+
 def teclado(window, key, scancode, action, mods):
-    global  acelerando, teclas, tiros
+    global  acelerando, teclas, tiros, x, y
 
     if key in teclas:
         if action == glfw.PRESS:
@@ -151,9 +164,8 @@ def teclado(window, key, scancode, action, mods):
 
     if key == glfw.KEY_SPACE:
         if action == glfw.PRESS:
-            tiros = True
-        elif action == glfw.RELEASE:
-            tiros = False
+            tiros.append([x, y, angulo])
+            
     
 def main():
     glfw.init()
@@ -168,6 +180,7 @@ def main():
         glClear(GL_COLOR_BUFFER_BIT)
         desenha()
         atualizar_aceleracao()
+        desenha_tiros()
         glfw.swap_buffers(window)
         glfw.poll_events()
     glfw.terminate()
