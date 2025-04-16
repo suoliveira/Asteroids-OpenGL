@@ -9,10 +9,11 @@ angulo = 0
 tam = 0.10
 velocidade_inicial = 0.01
 velocidade_atual = velocidade_inicial 
+velocidade_maxima = 0.05
 aceleracao = 0.0003
 acelerando = False
 tiros = []
-velocidade_tiros = 0.005
+velocidade_tiros = 0.02
 
 num_estrelas = 800
 vertices_estrelas = [(random.uniform(-1, 1), random.uniform(-1, 1)) for _ in range(num_estrelas)]
@@ -104,10 +105,12 @@ def desenha():
 
 def atualizar_aceleracao():
     global x, y
-    global angulo, velocidade_inicial, velocidade_atual
+    global angulo, velocidade_inicial, velocidade_atual, velocidade_maxima
 
     if acelerando:
         velocidade_atual += aceleracao
+        if velocidade_atual > velocidade_maxima:
+            velocidade_atual = velocidade_maxima
     else:
         if velocidade_atual > velocidade_inicial:
             velocidade_atual -= aceleracao
@@ -134,13 +137,16 @@ def desenha_tiros():
     novos_tiros = []
     for tiro in tiros:
         x, y, angulo_tiros = tiro
-        y += velocidade_tiros
-        x += velocidade_tiros
+        angle = math.radians(angulo_tiros + 90)
+        x += math.cos(angle) * velocidade_tiros
+        y += math.sin(angle) * velocidade_tiros
         
-        if y <= 1.0:
+        if y <= 1:
             novos_tiros.append([x,y, angulo_tiros])
+
         glPushMatrix()
         glTranslate(x, y, 0)
+        glRotatef(angulo_tiros, 0, 0, 1)
         glBegin(GL_LINES)
         glColor3f(1.0, 1.0, 0.0)  
         glVertex2f(0.0, tam * 2.2)  
@@ -167,6 +173,7 @@ def teclado(window, key, scancode, action, mods):
     if key == glfw.KEY_SPACE:
         if action == glfw.PRESS:
             tiros.append([x, y, angulo])
+ 
             
     
 def main():
