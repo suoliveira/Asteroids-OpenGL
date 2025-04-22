@@ -14,16 +14,43 @@ aceleracao = 0.0003
 acelerando = False
 tiros = []
 velocidade_tiros = 0.02
+velocidade_asteroids = 0.02
 
 num_estrelas = 800
 vertices_estrelas = [(random.uniform(-1, 1), random.uniform(-1, 1)) for _ in range(num_estrelas)]
+
+num_asteroids = 6
+vertices_asteroids = [[random.uniform(-1, 1), random.uniform(-1, 1), random.uniform(0, 360)] for _ in range(num_asteroids)]
 
 teclas = { glfw.KEY_W: False,
             glfw.KEY_A: False,
             glfw.KEY_D: False, 
             glfw.KEY_SPACE: False}
 
+def desenha_asteroids():
+    for asteroid in vertices_asteroids:
+        x, y, _ = asteroid
+        glPushMatrix()
+        glTranslatef(x, y, 0)
+
+        glColor3f(0.6, 0.6, 0.6)  # cor de rocha
+        glBegin(GL_POLYGON)
+        num_lados = 8
+        raio_base = 0.03  # tamanho do asteroide
+
+        for i in range(num_lados):
+            angulo = 2 * math.pi * i / num_lados
+            variacao = 1 + 0.2 * math.sin(i * 2)  
+            raio = raio_base * variacao
+            vx = raio * math.cos(angulo)
+            vy = raio * math.sin(angulo)
+            glVertex2f(vx, vy)
+        glEnd()
+        glPopMatrix()
+
+
 def desenha_estrelas():
+    glPointSize(1) 
     glBegin(GL_POINTS)
     glColor3f(1.0, 1.0, 1.0)  
     
@@ -37,6 +64,7 @@ def inicio():
 def desenha():
     # glLoadIdentity()
     desenha_estrelas()
+    desenha_asteroids()
 
     glPushMatrix()
     glTranslate(x, y, 0)
@@ -155,6 +183,34 @@ def desenha_tiros():
         glPopMatrix()
     tiros = novos_tiros
 
+def movimentacao_asteroids():
+    global vertices_asteroids, velocidade_asteroids
+
+    for i in range(len(vertices_asteroids)):
+        x, y, angulo = vertices_asteroids[i]
+
+        x += velocidade_asteroids * math.cos(math.radians(angulo))
+        y += velocidade_asteroids * math.sin(math.radians(angulo))
+
+        if x < -1 or x > 1 or y < -1 or y > 1:
+            borda = random.randint(0, 3)
+
+            if borda == 0:  # esquerda
+                x = -1
+                y = random.uniform(-1, 1)
+            elif borda == 1:  # direita
+                x = 1
+                y = random.uniform(-1, 1)
+            elif borda == 2:  # cima
+                x = random.uniform(-1, 1)
+                y = 1
+            else:  # baixo
+                x = random.uniform(-1, 1)
+                y = -1
+
+        vertices_asteroids[i] = [x, y, angulo]
+
+
 def teclado(window, key, scancode, action, mods):
     global  acelerando, teclas, tiros, x, y, angulo
 
@@ -189,6 +245,7 @@ def main():
         glClear(GL_COLOR_BUFFER_BIT)
         desenha()
         atualizar_aceleracao()
+        movimentacao_asteroids()
         desenha_tiros()
         glfw.swap_buffers(window)
         glfw.poll_events()
