@@ -15,6 +15,7 @@ acelerando = False
 tiros = []
 velocidade_tiros = 0.02
 velocidade_asteroids = 0.02
+angulo_asteroids = 0
 
 num_estrelas = 800
 vertices_estrelas = [(random.uniform(-1, 1), random.uniform(-1, 1)) for _ in range(num_estrelas)]
@@ -32,11 +33,11 @@ def desenha_asteroids():
         x, y, _ = asteroid
         glPushMatrix()
         glTranslatef(x, y, 0)
-
-        glColor3f(0.6, 0.6, 0.6)  # cor de rocha
+        glRotatef(angulo_asteroids, 0, 0, 1) 
+        glColor3f(0.6, 0.6, 0.6) 
         glBegin(GL_POLYGON)
-        num_lados = 8
-        raio_base = 0.03  # tamanho do asteroide
+        num_lados = 10
+        raio_base = 0.03  
 
         for i in range(num_lados):
             angulo = 2 * math.pi * i / num_lados
@@ -243,6 +244,8 @@ def main():
     while glfw.window_should_close(window) == False:
         time.sleep(1/30)
         glClear(GL_COLOR_BUFFER_BIT)
+        global angulo_asteroids
+        angulo_asteroids += 2
         desenha()
         atualizar_aceleracao()
         movimentacao_asteroids()
