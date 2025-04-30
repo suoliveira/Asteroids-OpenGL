@@ -14,7 +14,7 @@ aceleracao = 0.0003
 acelerando = False
 tiros = []
 velocidade_tiros = 0.02
-velocidade_asteroids = 0.02
+velocidade_asteroids = 0.008
 angulo_asteroids = 0
 
 num_estrelas = 800
@@ -30,7 +30,7 @@ teclas = { glfw.KEY_W: False,
 
 def desenha_asteroids():
     for asteroid in vertices_asteroids:
-        x, y, _ = asteroid
+        x, y, ang = asteroid
         glPushMatrix()
         glTranslatef(x, y, 0)
         glRotatef(angulo_asteroids, 0, 0, 1) 
@@ -49,7 +49,6 @@ def desenha_asteroids():
         glEnd()
         glPopMatrix()
 
-
 def desenha_estrelas():
     glPointSize(1) 
     glBegin(GL_POINTS)
@@ -61,6 +60,41 @@ def desenha_estrelas():
 
 def inicio():
     glClearColor(0, 0, 0.0, 0.0)
+
+def clamp(value, min_val, max_val):
+    return max(min_val, min(value, max_val))
+
+def checarColisao(quad_x, quad_y, s_tam, cx, cy, raio):
+    metade = s_tam / 2
+    x_prox = clamp(cx, quad_x - metade, quad_x + metade)
+    y_prox = clamp(cy, quad_y - metade, quad_y + metade)    
+    distance = math.hypot(x_prox - cx, y_prox - cy)
+    return distance < raio
+
+def verificarColisao():
+    global vertices_asteroids, x, y, tam
+
+    for asteroid in vertices_asteroids:
+        cx, cy, ang = asteroid  
+
+        if checarColisao(x, y, tam, cx, cy, tam): 
+            print("CABUMMMMMMMMMMM")
+            return True  
+    return False
+
+def verificarColisaoTiros():
+    global vertices_asteroids, tiros
+
+    for tiro in tiros:
+        tx, ty, t_angulo = tiro  
+        for asteroid in vertices_asteroids:
+            cx, cy, ang = asteroid  
+
+            if checarColisao(tx, ty, tam, cx, cy, tam): 
+                print("piupiupiu")
+                vertices_asteroids.remove(asteroid)
+                return True  
+    return False
 
 def desenha():
     # glLoadIdentity()
@@ -213,7 +247,7 @@ def movimentacao_asteroids():
 
 
 def teclado(window, key, scancode, action, mods):
-    global  acelerando, teclas, tiros, x, y, angulo
+    global  acelerando, teclas, tiros, x, y, angulo, hitbox
 
     if key in teclas:
         if action == glfw.PRESS:
@@ -229,9 +263,7 @@ def teclado(window, key, scancode, action, mods):
 
     if key == glfw.KEY_SPACE:
         if action == glfw.PRESS:
-            tiros.append([x, y, angulo])
- 
-            
+            tiros.append([x, y, angulo])       
     
 def main():
     glfw.init()
@@ -250,6 +282,19 @@ def main():
         atualizar_aceleracao()
         movimentacao_asteroids()
         desenha_tiros()
+        verificarColisaoTiros()
+
+        if verificarColisao():
+            print("Game over!")
+            break
+
+        if len(vertices_asteroids) == 0:
+            print("Você ganhou!")
+            break
+
+        # if len(vertices_asteroids) < 3:
+        #     vertices_asteroids.append([random.uniform(-1, 1), random.uniform(-1, 1), random.uniform(0, 360)])
+
         glfw.swap_buffers(window)
         glfw.poll_events()
     glfw.terminate()
